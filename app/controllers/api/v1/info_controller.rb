@@ -1,0 +1,39 @@
+class Api::V1::InfoController < Api::V1::BaseController
+  skip_before_filter :authenticate_user!, only: [:version]
+
+  # api :GET, '/api/v1/info/version', "Just prints the APPVERSION."
+  # api!
+  def version
+    render json: {
+      version: APPVERSION
+    }.to_json, status: 200
+  end
+
+  # api :GET, '/api/v1/info/token', "Given auth credentials, in HTTP_BASIC form, it returns the AUTH_TOKEN, email and id of the user which performed the authentication."
+  # api!
+  def token
+    render json: {
+      token: @current_user.authentication_token,
+      email: @current_user.email,
+      roles: @current_user.roles,
+      admin: @current_user.admin,
+      third_party: @current_user.third_party,
+      id: @current_user.id
+    }.to_json, status: 200
+  end
+
+  private
+
+  # Method overridden because the first time I have to ask for the token
+  def authenticate_user!
+    username, password = ActionController::HttpAuthentication::Basic.user_name_and_password(request)
+    if username
+      user = User.find_by(username: username)
+    end
+    if user && user.valid_password?(password)
+      @current_user = user
+    else
+      return unauthenticated!
+    end
+  end
+end
