@@ -109,7 +109,8 @@ class Api::V1::BaseController < ActionController::API
     end
     head status: status and return if errors.empty?
 
-    render json: jsonapi_format(errors).to_json, status: status
+    # render json: jsonapi_format(errors).to_json, status: status
+    render json: errors.to_json, status: status
   end
 
   def paginate(resource)
