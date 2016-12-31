@@ -5,6 +5,7 @@ require 'active_hash_relation'
 require 'rack/cors'
 require 'therubyracer'
 require "thecore_api/engine"
+require 'ransack'
 
 module ThecoreApi
 end

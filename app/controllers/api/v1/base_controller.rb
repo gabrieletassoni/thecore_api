@@ -29,7 +29,7 @@ class Api::V1::BaseController < ActionController::API
   def index
     # find the records
     @q = (@model.column_names.include?("user_id") ? @model.where(user_id: current_user.id) : @model).ransack(params[:q])
-    @records = @q.result(distinct: true)
+    @records = @q.result(distinct: true).page(params[:page]).per(params[:per])
 
     render json: @records.to_json(@json_attrs || {})
   end
