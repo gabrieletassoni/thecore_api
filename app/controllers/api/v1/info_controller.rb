@@ -9,7 +9,8 @@ class Api::V1::InfoController < Api::V1::BaseController
     }.to_json, status: 200
   end
 
-  # api :GET, '/api/v1/info/token', "Given auth credentials, in HTTP_BASIC form, it returns the AUTH_TOKEN, email and id of the user which performed the authentication."
+  # api :GET, '/api/v1/info/token', "Given auth credentials, in HTTP_BASIC form,
+  # it returns the AUTH_TOKEN, email and id of the user which performed the authentication."
   # api!
   def token
     render json: {
