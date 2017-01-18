@@ -62,14 +62,15 @@ Which will return an array of bundles which have provasv as code.
 http://localhost:3000/api/v1/items?pages_info=1&page=1&per=3
 
 {
-  "per_page": 3,
+  "count": 481,
+  "current_page_count": 3,
   "next_page": 2,
   "prev_page": null,
   "is_first_page": true,
   "is_last_page": false,
   "is_out_of_range": false,
-  "total_pages": 161,
-  "current_page": 1
+  "pages_count": 161,
+  "current_page_number": 1
 }
 
 http://localhost:3000/api/v1/items?count=1
