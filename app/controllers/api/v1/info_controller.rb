@@ -1,5 +1,5 @@
 class Api::V1::InfoController < Api::V1::BaseController
-  skip_before_filter :authenticate_user!, only: [:version]
+  skip_before_action :authenticate_user!, only: [:version]
 
   # api :GET, '/api/v1/info/version', "Just prints the APPVERSION."
   # api!

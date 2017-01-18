@@ -13,9 +13,9 @@ class Api::V1::BaseController < ActionController::API
 
   before_action :destroy_session
 
-  before_filter :authenticate_user!
-  before_filter :find_model, except: [ :version, :token ]
-  before_filter :find_record, only: [ :show, :update, :destroy ]
+  before_action :authenticate_user!
+  before_action :find_model, except: [ :version, :token ]
+  before_action :find_record, only: [ :show, :update, :destroy ]
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!
   rescue_from ActiveRecord::StatementInvalid, with: :unauthenticated!
@@ -29,10 +29,36 @@ class Api::V1::BaseController < ActionController::API
   def index
     # find the records
     @q = (@model.column_names.include?("user_id") ? @model.where(user_id: current_user.id) : @model).ransack(params[:q])
-    @records = @q.result(distinct: true).page(params[:page]).per(params[:per])
+    @records_all = @q.result(distinct: true)
+    @records = @records_all.page(params[:page]).per(params[:per])
 
-    render json: @records.to_json(@json_attrs || {})
+    # If there's the keyword pagination_info, then return a pagination info object
+    return render json: {
+      count: @records_all.count,
+      current_page_count: @records.count,
+      next_page: @records.next_page,
+      prev_page: @records.prev_page,
+      is_first_page: @records.first_page?,
+      is_last_page: @records.last_page?,
+      is_out_of_range: @records.out_of_range?,
+      pages_count: @records.total_pages,
+      current_page_number: @records.current_page
+    }.to_json if !params[:pages_info].nil?
+    # If it's asked for page number, the paginate
+    return render json: @records.to_json(@json_attrs || {}) if !params[:page].nil?
+    # if you ask for count, then return a json object with just the number of objects
+    return render json: {count: @records_all.count}.to_json if !params[:count].nil?
+    # Default
+    render json: @records_all.to_json(@json_attrs || {})
   end
+
+  # def count
+  #   # find the records
+  #   @q = (@model.column_names.include?("user_id") ? @model.where(user_id: current_user.id) : @model).ransack(params[:q])
+  #   @records_all = @q.result(distinct: true)
+  #   # if you ask for count, then return a json object with just the number of objects
+  #   return render json: {count: @records_all.count}.to_json
+  # end
 
   def search
     index
