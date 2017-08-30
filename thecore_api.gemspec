@@ -23,10 +23,12 @@ Gem::Specification.new do |s|
   s.add_dependency 'thecore', "~> 1.0"
   # s.add_dependency 'rails-api' merged into rails 5
   s.add_dependency 'ransack', "~> 1.8"
-  s.add_dependency 'active_model_serializers', "~> 0.9.0"
+  # s.add_dependency 'active_model_serializers', "~> 0.9.0"
   s.add_dependency 'active_hash_relation', "~> 1.4"
   s.add_dependency 'rack-cors', "~> 0.4"
   s.add_dependency 'therubyracer', "~> 0.12"
+  s.add_dependency 'oj', '~> 3.3'
+  s.add_dependency "multi_json", '~> 1.11'
   # -----------------------------------------------------------------------------------------------
 
   # s.add_development_dependency "sqlite3"

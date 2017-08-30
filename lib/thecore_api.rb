@@ -1,6 +1,8 @@
 require 'thecore'
+require 'oj'
+require 'multi_json'
 # require 'rails-api' integrated into rails 5.0
-require 'active_model_serializers'
+# require 'active_model_serializers'
 require 'active_hash_relation'
 require 'rack/cors'
 require 'therubyracer'
