@@ -33,7 +33,7 @@ class Api::V1::BaseController < ActionController::API
     @records = @records_all.page(params[:page]).per(params[:per])
 
     # If there's the keyword pagination_info, then return a pagination info object
-    return render json: MultiJson.dump {
+    return render json: MultiJson.dump({
       count: @records_all.count,
       current_page_count: @records.count,
       next_page: @records.next_page,
@@ -43,7 +43,7 @@ class Api::V1::BaseController < ActionController::API
       is_out_of_range: @records.out_of_range?,
       pages_count: @records.total_pages,
       current_page_number: @records.current_page
-    } if !params[:pages_info].nil?
+    }) if !params[:pages_info].nil?
     # If it's asked for page number, the paginate
     return render json: MultiJson.dump(@records, @json_attrs || {}) if !params[:page].nil? # (@json_attrs || {})
     # if you ask for count, then return a json object with just the number of objects
