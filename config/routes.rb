@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       namespace :info do
         get :version
         get :token
+        get :roles
       end
 
       resources :users, only: [:index, :create, :show, :update, :destroy] do

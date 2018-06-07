@@ -23,6 +23,10 @@ class Api::V1::InfoController < Api::V1::BaseController
     }.to_json, status: 200
   end
 
+  def roles
+    render json: ROLES.to_json, status: 200
+  end
+
   private
 
   # Method overridden because the first time I have to ask for the token
