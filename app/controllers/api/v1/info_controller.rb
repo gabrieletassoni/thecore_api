@@ -5,7 +5,7 @@ class Api::V1::InfoController < Api::V1::BaseController
   # api!
   def version
     render json: {
-      version: APPVERSION
+      version: (APPVERSION rescue "No version specified for this app, please add an APPVERSION constant to an initializer to start versioning the application.")
     }.to_json, status: 200
   end
 
@@ -15,15 +15,13 @@ class Api::V1::InfoController < Api::V1::BaseController
   def token
     render json: {
       token: @current_user.authentication_token,
-      email: @current_user.email,
-      roles: @current_user.roles,
-      admin: @current_user.admin,
-      third_party: @current_user.third_party,
-      id: @current_user.id
+      email: @current_user.email
     }.to_json, status: 200
   end
 
-  def roles
+  # api :GET, '/api/v1/info/available_roles', "Given auth credentials, in HTTP_BASIC form,
+  # it returns the roles list
+  def available_roles
     render json: ROLES.to_json, status: 200
   end
 
