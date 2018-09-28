@@ -10,6 +10,6 @@ class Api::V1::UsersController < Api::V1::BaseController
   end
   
   def request_params
-    params.require(:users).permit(:email, :roles, :password, :password_confirmation, :username, :number_of_instances_purchased, :admin, :locked).delete_if{ |k,v| v.nil? }
+    params.require(:users).permit(:email, :roles, :password, :password_confirmation, :username, :number_of_instances_purchased, :admin, :locked).delete_if{ |_,v| v.nil? }
   end
 end
