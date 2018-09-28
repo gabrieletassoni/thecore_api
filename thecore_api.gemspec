@@ -22,10 +22,10 @@ Gem::Specification.new do |s|
   # API: http://fancypixel.github.io/blog/2015/01/28/react-plus-flux-backed-by-rails-api/
   s.add_dependency 'thecore', "~> 1.0"
   # s.add_dependency 'rails-api' merged into rails 5
-  s.add_dependency 'ransack', "~> 1.8"
+  s.add_dependency 'ransack', "~> 2.0"
   # s.add_dependency 'active_model_serializers', "~> 0.9.0"
   s.add_dependency 'active_hash_relation', "~> 1.4"
-  s.add_dependency 'rack-cors', "~> 0.4"
+  s.add_dependency 'rack-cors', "~> 1.0"
   s.add_dependency 'therubyracer', "~> 0.12"
   # -----------------------------------------------------------------------------------------------
 
