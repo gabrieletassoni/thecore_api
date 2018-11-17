@@ -26,6 +26,11 @@ class Api::V1::BaseController < ActionController::API
 
   attr_accessor :current_user
 
+  #Disabling Strong Parameters
+  def params
+    request.parameters
+  end
+
   def index
     # find the records
     @q = (@model.column_names.include?("user_id") ? @model.where(user_id: current_user.id) : @model).ransack(params[:q])
