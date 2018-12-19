@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'active_hash_relation', "~> 1.4"
   s.add_dependency 'rack-cors', "~> 1.0"
   s.add_dependency 'therubyracer', "~> 0.12"
+  s.add_dependency 'cached_resource', '~> 5.1'
   # -----------------------------------------------------------------------------------------------
 
   # s.add_development_dependency "sqlite3"

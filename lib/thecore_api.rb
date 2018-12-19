@@ -4,6 +4,7 @@ require 'thecore'
 require 'active_hash_relation'
 require 'rack/cors'
 require 'therubyracer'
+require 'cached_resource'
 require "thecore_api/engine"
 require 'ransack'
 
