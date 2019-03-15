@@ -94,7 +94,7 @@ class Api::V1::BaseController < ActionController::API
        return api_error(status: 500)
     end
 
-    head status: 204
+    render json: {message: "Deleted"}, status: 200
   end
 
   protected
