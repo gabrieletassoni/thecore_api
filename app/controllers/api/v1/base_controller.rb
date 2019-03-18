@@ -27,9 +27,9 @@ class Api::V1::BaseController < ActionController::API
   attr_accessor :current_user
 
   #Disabling Strong Parameters
-  def params
-    request.parameters
-  end
+  # def params
+  #   request.parameters
+  # end
 
   def index
     # find the records
@@ -179,7 +179,7 @@ class Api::V1::BaseController < ActionController::API
     end
   end
 
-  private
+  # private
 
   def find_record
     # find the records
@@ -192,6 +192,6 @@ class Api::V1::BaseController < ActionController::API
   end
 
   def request_params
-    params.require(controller_name.to_sym).permit!().delete_if{ |_,v| v.nil? }
+    params.require(controller_name.singularize.to_sym).permit!
   end
 end
