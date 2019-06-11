@@ -1,3 +1,3 @@
 module ThecoreApi
-  VERSION = "1.2.9".freeze
+  VERSION = "1.3.2".freeze
 end

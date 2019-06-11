@@ -17,6 +17,19 @@ Rails.application.routes.draw do
       resources :users, only: [:index, :create, :show, :update, :destroy] do
         match 'search' => 'users#search', via: [:get, :post], as: :search, on: :collection
       end
+
+      namespace :base do
+        get :check
+        post :check
+        put :check
+        delete :check
+      end
+
+      # Catchall routes
+      get '*path', to: 'base#check'
+      post '*path', to: 'base#check'
+      put '*path', to: 'base#check'
+      delete '*path', to: 'base#check'
     end
   end
 end

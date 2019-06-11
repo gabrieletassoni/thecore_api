@@ -1,3 +1,11 @@
+# Rails.application.routes.disable_clear_and_finalize = true
+# Rails.application.routes.draw do
+#   namespace :api do
+#     namespace :v1, defaults: { format: :json } do
+
+#     end
+#   end
+# end
 # https://labs.kollegorna.se/blog/2015/04/build-an-api-now/
 class Api::V1::BaseController < ActionController::API
   include CanCan::ControllerAdditions
@@ -14,7 +22,7 @@ class Api::V1::BaseController < ActionController::API
   before_action :destroy_session
 
   before_action :authenticate_user!
-  before_action :find_model, except: [ :version, :token, :available_roles ]
+  before_action :find_model, except: [ :version, :token, :available_roles, :check ]
   before_action :find_record, only: [ :show, :update, :destroy ]
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!
@@ -31,11 +39,42 @@ class Api::V1::BaseController < ActionController::API
   #   request.parameters
   # end
 
+  def check
+    path = params[:path].split("/")
+    find_model path.first
+    if request.get?
+      if path.second.blank?
+        @page = params[:page]
+        @per = params[:per]
+        @pages_info = params[:pages_info]
+        @count = params[:count]
+        @query = params[:q]
+        index
+      else
+        find_record path.second.to_i
+        show
+      end
+    elsif request.post?
+      # Non sono certo che i request params gli arrivino... Domani da testare
+      create
+    else
+      return render json: MultiJson.dump({path: params[:path], verb: :get, dump: params[:q] }) 
+      return render json: MultiJson.dump({path: params[:path], verb: :post }) if request.post?
+      return render json: MultiJson.dump({path: params[:path], verb: :put }) if request.put?
+      return render json: MultiJson.dump({path: params[:path], verb: :delete }) if request.delete?
+    end
+  end
+
   def index
+    # Rails.logger.debug params.inspect
     # find the records
-    @q = (@model.column_names.include?("user_id") ? @model.where(user_id: current_user.id) : @model).ransack(params[:q])
+    @q = (@model.column_names.include?("user_id") ? @model.where(user_id: current_user.id) : @model).ransack(@query.presence|| params[:q])
     @records_all = @q.result(distinct: true)
-    @records = @records_all.page(params[:page]).per(params[:per])
+    page = (@page.presence || params[:page])
+    per = (@per.presence || params[:per])
+    pages_info = (@pages_info.presence || params[:pages_info])
+    count = (@count.presence || params[:count])
+    @records = @records_all.page(page).per(per)
 
     # If there's the keyword pagination_info, then return a pagination info object
     return render json: MultiJson.dump({
@@ -48,11 +87,11 @@ class Api::V1::BaseController < ActionController::API
       is_out_of_range: @records.out_of_range?,
       pages_count: @records.total_pages,
       current_page_number: @records.current_page
-    }) if !params[:pages_info].nil?
+    }) if !pages_info.blank?
     # If it's asked for page number, the paginate
-    return render json: MultiJson.dump(@records, @json_attrs || {}) if !params[:page].nil? # (@json_attrs || {})
+    return render json: MultiJson.dump(@records, @json_attrs || {}) if !page.blank? # (@json_attrs || {})
     # if you ask for count, then return a json object with just the number of objects
-    return render json: MultiJson.dump({count: @records_all.count}) if !params[:count].nil?
+    return render json: MultiJson.dump({count: @records_all.count}) if !count.blank?
     # Default
     render json: MultiJson.dump(@records_all, @json_attrs || {}) #(@json_attrs || {})
   end
@@ -181,17 +220,19 @@ class Api::V1::BaseController < ActionController::API
 
   # private
 
-  def find_record
+  def find_record id
     # find the records
-    @record = @model.column_names.include?("user_id") ? @model.where(id: params[:id], user_id: current_user.id).first : @model.find(params[:id])
+    @record = @model.column_names.include?("user_id") ? @model.where(id: (id.presence || params[:id]), user_id: current_user.id).first : @model.find((id.presence || params[:id]))
   end
 
-  def find_model
+  def find_model path=nil
     # Find the name of the model from controller
-    @model = controller_path.classify.constantize rescue controller_name.classify.constantize
+    @singular_controller = (path.presence || controller_name).singularize.to_sym
+    @model = (path.presence || controller_path).classify.constantize rescue controller_name.classify.constantize
   end
 
   def request_params
-    params.require(controller_name.singularize.to_sym).permit!
+    # controller_name.singularize.to_sym 
+    params.require(@singular_controller).permit!
   end
 end
