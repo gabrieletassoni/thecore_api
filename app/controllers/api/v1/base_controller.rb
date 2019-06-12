@@ -50,9 +50,17 @@ class Api::V1::BaseController < ActionController::API
         @count = params[:count]
         @query = params[:q]
         index
-      else
+      elsif path.second.to_i.zero?
+        # String, so it's a custom action I must find in the @model (as an singleton method)
+        # Like: :controller/:custom_action
+        return render json: MultiJson.dump(@model.send(path.second, params))
+      elsif !path.second.to_i.zero? && path.third.blank?
+        # Integer, so it's an ID, I must show it
         find_record path.second.to_i
         show
+      elsif !path.second.to_i.zero? && !path.third.blank?
+        # Like :controller/:id/:custom_action
+        return render json: MultiJson.dump(@model.send(path.third, path.second.to_i, params))
       end
     elsif request.post?
       # Non sono certo che i request params gli arrivino... Domani da testare
@@ -93,11 +101,11 @@ class Api::V1::BaseController < ActionController::API
       current_page_number: @records.current_page
     }) if !pages_info.blank?
     # If it's asked for page number, the paginate
-    return render json: MultiJson.dump(@records, @json_attrs || {}) if !page.blank? # (@json_attrs || {})
+    return render json: MultiJson.dump(@records, json_attrs) if !page.blank? # (@json_attrs || {})
     # if you ask for count, then return a json object with just the number of objects
     return render json: MultiJson.dump({count: @records_all.count}) if !count.blank?
     # Default
-    render json: MultiJson.dump(@records_all, @json_attrs || {}) #(@json_attrs || {})
+    render json: MultiJson.dump(@records_all, json_attrs) #(@json_attrs || {})
   end
 
   # def count
@@ -114,7 +122,7 @@ class Api::V1::BaseController < ActionController::API
   end
 
   def show
-    render json: @record.to_json(@json_attrs || {}), status: 200
+    render json: @record.to_json(json_attrs), status: 200
   end
 
   def create
@@ -123,13 +131,13 @@ class Api::V1::BaseController < ActionController::API
 
     @record.save!
 
-    render json: @record.to_json(@json_attrs || {}), status: 201
+    render json: @record.to_json(json_attrs), status: 201
   end
 
   def update
     @record.update_attributes(request_params)
 
-    render json: @record.to_json(@json_attrs || {}), status: 200
+    render json: @record.to_json(json_attrs), status: 200
   end
 
   def destroy
@@ -238,5 +246,9 @@ class Api::V1::BaseController < ActionController::API
   def request_params
     # controller_name.singularize.to_sym 
     params.require(@singular_controller).permit!
+  end
+
+  def json_attrs
+    @model.json_attrs.presence || @json_attrs.presence || {}
   end
 end
