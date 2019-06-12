@@ -56,12 +56,16 @@ class Api::V1::BaseController < ActionController::API
       end
     elsif request.post?
       # Non sono certo che i request params gli arrivino... Domani da testare
+      # Il body come glielo passo?
       create
-    else
-      return render json: MultiJson.dump({path: params[:path], verb: :get, dump: params[:q] }) 
-      return render json: MultiJson.dump({path: params[:path], verb: :post }) if request.post?
-      return render json: MultiJson.dump({path: params[:path], verb: :put }) if request.put?
-      return render json: MultiJson.dump({path: params[:path], verb: :delete }) if request.delete?
+    elsif request.put?
+      # Non sono certo che i request params gli arrivino... Domani da testare
+      # Il body come glielo passo?
+      find_record path.second.to_i
+      update
+    elsif request.delete?
+      find_record path.second.to_i
+      destroy
     end
   end
 
