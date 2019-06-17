@@ -65,10 +65,12 @@ class Api::V1::BaseController < ActionController::API
     elsif request.post?
       # Non sono certo che i request params gli arrivino... Domani da testare
       # Il body come glielo passo?
+      @params = params
       create
     elsif request.put?
       # Non sono certo che i request params gli arrivino... Domani da testare
       # Il body come glielo passo?
+      @params = params
       find_record path.second.to_i
       update
     elsif request.delete?
@@ -245,7 +247,7 @@ class Api::V1::BaseController < ActionController::API
 
   def request_params
     # controller_name.singularize.to_sym 
-    params.require(@singular_controller).permit!
+    (@params.presence || params).require(@singular_controller).permit!
   end
 
   def json_attrs
