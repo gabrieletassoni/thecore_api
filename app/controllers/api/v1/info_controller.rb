@@ -1,5 +1,6 @@
 class Api::V1::InfoController < Api::V1::BaseController
-  skip_before_action :authenticate_user!, only: [:version]
+  # Info uses a different auth method: username and password
+  skip_before_action :authenticate_user!, only: [:version, :translations], raise: false
 
   # api :GET, '/api/v1/info/version', "Just prints the APPVERSION."
   # api!
@@ -25,7 +26,12 @@ class Api::V1::InfoController < Api::V1::BaseController
     render json: ROLES.to_json, status: 200
   end
 
-  private
+  # GET '/api/v1/info/translations'
+  def translations
+    render json: I18n.t(".", locale: (params[:locale].presence || :it)).to_json, status: 200
+  end
+
+  # private
 
   # Method overridden because the first time I have to ask for the token
   def authenticate_user!

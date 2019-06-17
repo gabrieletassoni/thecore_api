@@ -22,7 +22,7 @@ class Api::V1::BaseController < ActionController::API
   before_action :destroy_session
 
   before_action :authenticate_user!
-  before_action :find_model, except: [ :version, :token, :available_roles, :check ]
+  before_action :find_model, except: [ :version, :token, :available_roles, :check, :translations ]
   before_action :find_record, only: [ :show, :update, :destroy ]
 
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!

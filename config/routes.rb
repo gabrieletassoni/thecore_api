@@ -12,6 +12,7 @@ Rails.application.routes.draw do
         get :version
         get :token
         get :available_roles
+        get :translations
       end
 
       resources :users, only: [:index, :create, :show, :update, :destroy] do
