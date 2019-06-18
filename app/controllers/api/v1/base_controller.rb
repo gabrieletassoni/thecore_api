@@ -104,12 +104,14 @@ class Api::V1::BaseController < ActionController::API
       pages_count: @records.total_pages,
       current_page_number: @records.current_page
     }) if !pages_info.blank?
-    # If it's asked for page number, the paginate
-    return render json: MultiJson.dump(@records, json_attrs) if !page.blank? # (@json_attrs || {})
+    
+    status = @records_all.blank? ? 404 : 200
+    # If it's asked for page number, then paginate
+    return render json: MultiJson.dump(@records, json_attrs), status: status if !page.blank? # (@json_attrs || {})
     # if you ask for count, then return a json object with just the number of objects
     return render json: MultiJson.dump({count: @records_all.count}) if !count.blank?
     # Default
-    render json: MultiJson.dump(@records_all, json_attrs) #(@json_attrs || {})
+    render json: MultiJson.dump(@records_all, json_attrs), status: status #(@json_attrs || {})
   end
 
   # def count
