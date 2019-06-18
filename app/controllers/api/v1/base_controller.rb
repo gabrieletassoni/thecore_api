@@ -53,14 +53,16 @@ class Api::V1::BaseController < ActionController::API
       elsif path.second.to_i.zero?
         # String, so it's a custom action I must find in the @model (as an singleton method)
         # Like: :controller/:custom_action
-        return render json: MultiJson.dump(@model.send(path.second, params))
+        result = MultiJson.dump(@model.send(path.second, params))
+        return render json: result, status: result.blank? ? 404 : 200
       elsif !path.second.to_i.zero? && path.third.blank?
         # Integer, so it's an ID, I must show it
         find_record path.second.to_i
         show
       elsif !path.second.to_i.zero? && !path.third.blank?
         # Like :controller/:id/:custom_action
-        return render json: MultiJson.dump(@model.send(path.third, path.second.to_i, params))
+        result = MultiJson.dump(@model.send(path.third, path.second.to_i, params))
+        return render json: result, status: result.blank? ? 404 : 200
       end
     elsif request.post?
       # Non sono certo che i request params gli arrivino... Domani da testare
@@ -124,7 +126,8 @@ class Api::V1::BaseController < ActionController::API
   end
 
   def show
-    render json: @record.to_json(json_attrs), status: 200
+    result = @record.to_json(json_attrs)
+    render json: result, status: result.blank? ? 404 : 200
   end
 
   def create
