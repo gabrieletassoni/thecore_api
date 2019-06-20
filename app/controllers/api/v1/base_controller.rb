@@ -180,8 +180,9 @@ class Api::V1::BaseController < ActionController::API
     render json: { error: 'you are not enabled to do so' }, status: 403
   end
 
-  def invalid!
-    render json: { error: 'Some validation has failed' }, status: 422
+  def invalid! exception
+    # Rails.logger.debug exception.errors.inspect
+    render json: { error: exception }, status: 422
   end
 
   def invalid_resource!(errors = [])
