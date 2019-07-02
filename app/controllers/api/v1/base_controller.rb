@@ -57,7 +57,10 @@ class Api::V1::BaseController < ActionController::API
         return render json: result, status: result.blank? ? 404 : 200
       elsif !path.second.to_i.zero? && path.third.blank?
         # Integer, so it's an ID, I must show it
-        find_record path.second.to_i
+        # Rails.logger.debug "IL SECONDO è ID? #{path.second.inspect}"
+        # find_record path.second.to_i
+        @record_id =  path.second.to_i
+        find_record
         show
       elsif !path.second.to_i.zero? && !path.third.blank?
         # Like :controller/:id/:custom_action
@@ -65,18 +68,30 @@ class Api::V1::BaseController < ActionController::API
         return render json: result, status: result.blank? ? 404 : 200
       end
     elsif request.post?
-      # Non sono certo che i request params gli arrivino... Domani da testare
-      # Il body come glielo passo?
-      @params = params
-      create
+      if path.second.blank?
+        @params = params
+        create
+      elsif path.second.to_i.zero?
+        result = MultiJson.dump(@model.send(path.second, params))
+        return render json: result, status: result.blank? ? 404 : 200
+      end
     elsif request.put?
-      # Non sono certo che i request params gli arrivino... Domani da testare
-      # Il body come glielo passo?
-      @params = params
-      find_record path.second.to_i
-      update
+      if !path.second.to_i.zero? && path.third.blank?
+        @params = params
+        # Rails.logger.debug "IL SECONDO è ID in PUT? #{path.second.inspect}"
+        # find_record path.second.to_i
+        @record_id =  path.second.to_i
+        find_record
+        update
+      elsif !path.second.to_i.zero? && !path.third.blank?
+        result = MultiJson.dump(@model.send(path.third, path.second.to_i, params))
+        return render json: result, status: result.blank? ? 404 : 200
+      end
     elsif request.delete?
-      find_record path.second.to_i
+      # Rails.logger.debug "IL SECONDO è ID in delete? #{path.second.inspect}"
+      # find_record path.second.to_i
+      @record_id =  path.second.to_i
+      find_record
       destroy
     end
   end
@@ -240,9 +255,9 @@ class Api::V1::BaseController < ActionController::API
 
   # private
 
-  def find_record id
+  def find_record
     # find the records
-    @record = @model.column_names.include?("user_id") ? @model.where(id: (id.presence || params[:id]), user_id: current_user.id).first : @model.find((id.presence || params[:id]))
+    @record = @model.column_names.include?("user_id") ? @model.where(id: (@record_id.presence || params[:id]), user_id: current_user.id).first : @model.find((@record_id.presence || params[:id]))
   end
 
   def find_model path=nil
@@ -257,6 +272,6 @@ class Api::V1::BaseController < ActionController::API
   end
 
   def json_attrs
-    @model.json_attrs.presence || @json_attrs.presence || {}
+    ((@model.json_attrs.presence || @json_attrs.presence || {}) rescue {})
   end
 end
