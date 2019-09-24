@@ -13,6 +13,7 @@ Rails.application.routes.draw do
         get :token
         get :available_roles
         get :translations
+        get :schema
       end
 
       resources :users, only: [:index, :create, :show, :update, :destroy] do

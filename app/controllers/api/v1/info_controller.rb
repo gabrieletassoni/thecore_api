@@ -1,6 +1,6 @@
 class Api::V1::InfoController < Api::V1::BaseController
   # Info uses a different auth method: username and password
-  skip_before_action :authenticate_user!, only: [:version, :translations], raise: false
+  skip_before_action :authenticate_user!, only: [:version, :translations, :schema], raise: false
 
   # api :GET, '/api/v1/info/version', "Just prints the APPVERSION."
   # api!
@@ -29,6 +29,22 @@ class Api::V1::InfoController < Api::V1::BaseController
   # GET '/api/v1/info/translations'
   def translations
     render json: I18n.t(".", locale: (params[:locale].presence || :it)).to_json, status: 200
+  end
+
+  def schema
+    pivot = {}
+    if Rails.env.development?
+      Rails.configuration.eager_load_namespaces.each(&:eager_load!) if Rails.version.to_i == 5 #Rails 5
+      Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
+    end
+    ApplicationRecord.subclasses.each do |d|
+      model = d.to_s.underscore
+      pivot[model] ||= {}
+      d.columns_hash.each_pair do |key, val| 
+        pivot[model][key] = val.type 
+      end 
+    end
+    render json: pivot.to_json, status: 200
   end
 
   # private
