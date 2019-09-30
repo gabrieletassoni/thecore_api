@@ -38,7 +38,7 @@ class Api::V1::InfoController < Api::V1::BaseController
       Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
     end
     ApplicationRecord.subclasses.each do |d|
-      model = d.to_s.underscore
+      model = d.to_s.underscore.tableize
       pivot[model] ||= {}
       d.columns_hash.each_pair do |key, val| 
         pivot[model][key] = val.type 
