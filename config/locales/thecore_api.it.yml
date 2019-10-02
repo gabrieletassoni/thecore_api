@@ -1,0 +1,6 @@
+it:
+  api:
+    errors:
+      bad_credentials: Credenziali errate
+      unauthorized: Operazione non autorizzata
+      not_found: Risorsa non trovata

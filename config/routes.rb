@@ -10,7 +10,7 @@ Rails.application.routes.draw do
 
       namespace :info do
         get :version
-        get :token
+        # get :token
         get :available_roles
         get :translations
         get :schema

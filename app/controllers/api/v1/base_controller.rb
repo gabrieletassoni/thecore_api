@@ -22,15 +22,15 @@ class Api::V1::BaseController < ActionController::API
   before_action :destroy_session
 
   before_action :authenticate_user!
-  before_action :find_model, except: [ :version, :token, :available_roles, :check, :translations, :schema ]
+  before_action :find_model, except: [ :version, :available_roles, :translations, :schema ]
   before_action :find_record, only: [ :show, :update, :destroy ]
 
-  rescue_from ActiveRecord::RecordNotFound, with: :not_found!
   rescue_from ActiveRecord::StatementInvalid, with: :unauthenticated!
   rescue_from ActiveRecord::RecordInvalid, with: :invalid!
-  #rescue_from CanCan::AuthorizationNotPerformed, with: :unauthorized!
   rescue_from CanCan::AccessDenied, with: :unauthorized!
-  #rescue_from Pundit::NotAuthorizedError, with: :unauthorized!
+  rescue_from ActiveRecord::RecordNotFound, with: :not_found!
+  rescue_from NameError, with: :not_found!
+  rescue_from NoMethodError, with: :not_found!
 
   attr_accessor :current_user
 
@@ -40,7 +40,13 @@ class Api::V1::BaseController < ActionController::API
   # end
 
   def check
+    # This method is only valid for ActiveRecords
+    # For any other model-less controller, the actions must be 
+    # defined in the route, and must exist in the controller definition.
+    # So, if it's not an activerecord, the find model makes no sense at all
+    # Thus must return 404
     path = params[:path].split("/")
+    return not_found! if (!path.first.classify.constantize.new.is_a? ActiveRecord::Base rescue false)
     find_model path.first
     if request.get?
       if path.second.blank?
@@ -51,10 +57,10 @@ class Api::V1::BaseController < ActionController::API
         @query = params[:q]
         index
       elsif path.second.to_i.zero?
-        # String, so it's a custom action I must find in the @model (as an singleton method)
-        # Like: :controller/:custom_action
-        result = MultiJson.dump(@model.send(path.second, params))
-        return render json: result, status: result.blank? ? 404 : 200
+        # String, so it's a custom action I must find in the @model (as a singleton method)
+        # GET :controller/:custom_action
+        return not_found! unless @model.respond_to?(path.second)
+        return render json: MultiJson.dump(@model.send(path.second, params)), status: 200
       elsif !path.second.to_i.zero? && path.third.blank?
         # Integer, so it's an ID, I must show it
         # Rails.logger.debug "IL SECONDO è ID? #{path.second.inspect}"
@@ -63,17 +69,18 @@ class Api::V1::BaseController < ActionController::API
         find_record
         show
       elsif !path.second.to_i.zero? && !path.third.blank?
-        # Like :controller/:id/:custom_action
-        result = MultiJson.dump(@model.send(path.third, path.second.to_i, params))
-        return render json: result, status: result.blank? ? 404 : 200
+        # GET :controller/:id/:custom_action
+        return not_found! unless @model.respond_to?(path.third)
+        return render json: MultiJson.dump(@model.send(path.third, path.second.to_i, params)), status: 200
       end
     elsif request.post?
       if path.second.blank?
         @params = params
         create
       elsif path.second.to_i.zero?
-        result = MultiJson.dump(@model.send(path.second, params))
-        return render json: result, status: result.blank? ? 404 : 200
+        # POST :controller/:custom_action
+        return not_found! unless @model.respond_to?(path.second)
+        return render json: MultiJson.dump(@model.send(path.second, params)), status: 200
       end
     elsif request.put?
       if !path.second.to_i.zero? && path.third.blank?
@@ -84,8 +91,9 @@ class Api::V1::BaseController < ActionController::API
         find_record
         update
       elsif !path.second.to_i.zero? && !path.third.blank?
-        result = MultiJson.dump(@model.send(path.third, path.second.to_i, params))
-        return render json: result, status: result.blank? ? 404 : 200
+        # PUT :controller/:id/:custom_action
+        return not_found! unless @model.respond_to?(path.third)
+        return render json: MultiJson.dump(@model.send(path.third, path.second.to_i, params)), status: 200
       end
     elsif request.delete?
       # Rails.logger.debug "IL SECONDO è ID in delete? #{path.second.inspect}"
@@ -178,44 +186,48 @@ class Api::V1::BaseController < ActionController::API
 
   def unauthenticated!
     response.headers['WWW-Authenticate'] = "Token realm=Application"
-    render json: { error: 'bad credentials' }, status: 401
+    # render json: { error: 'bad credentials' }, status: 401
+    api_error status: 401, errors: [I18n.t("api.errors.bad_credentials", default: "Bad Credentials")]
   end
 
   def unauthorized!
-    render nothing: true, status: :forbidden
+    # render nothing: true, status: :forbidden
+    api_error status: 403, errors: [I18n.t("api.errors.unauthorized", default: "Unauthorized")]
     return
-  end
-
-  def invalid_credentials!
-    render json: { error: 'invalid credentials' }, status: 403
-    return
-  end
-
-  def unable!
-    render json: { error: 'you are not enabled to do so' }, status: 403
-  end
-
-  def invalid! exception
-    # Rails.logger.debug exception.errors.inspect
-    render json: { error: exception }, status: 422
-  end
-
-  def invalid_resource!(errors = [])
-    api_error(status: 422, errors: errors)
   end
 
   def not_found!
-    return api_error(status: 404, errors: 'Not found')
+    return api_error(status: 404, errors: [I18n.t("api.errors.not_found", default: "Not Found")])
+  end
+
+  def invalid! exception
+    # puts "ISPEZIONI: #{exception.record.errors.inspect}"
+    # render json: { error: exception }, status: 422
+    api_error status: 422, errors: exception.record.errors
   end
 
   def api_error(status: 500, errors: [])
-    unless Rails.env.production?
-      puts errors.full_messages if errors.respond_to? :full_messages
+    # puts errors.full_messages if !Rails.env.production? && errors.respond_to?(:full_messages)
+    head status: status && return if errors.empty?
+    
+    # For retrocompatibility, I try to send back only strings, as errors
+    errors_response = if errors.respond_to?(:full_messages) 
+      # Validation Errors
+      errors.full_messages.join(", ")
+    elsif errors.respond_to?(:error)
+      # Generic uncatched error
+      errors.error
+    elsif errors.respond_to?(:exception)
+      # Generic uncatchd error, if the :error property does not exist, exception will
+      errors.exception
+    elsif errors.is_a? Array
+      # An array of values, I like to have them merged
+      errors.join(", ")
+    else
+      # Uncatched Error, comething I don't know, I must return the errors as it is
+      errors
     end
-    head status: status and return if errors.empty?
-
-    # render json: jsonapi_format(errors).to_json, status: status
-    render json: errors.to_json, status: status
+    render json: {error: errors_response}, status: status
   end
 
   def paginate(resource)
@@ -241,16 +253,11 @@ class Api::V1::BaseController < ActionController::API
   def authenticate_user!
     token, options = ActionController::HttpAuthentication::Token.token_and_options(request)
 
-    # puts "controller: #{controller_name}\naction: #{action_name}\ntoken: #{token}\noptions: #{options.inspect}\n\n"
+    user_email = options.blank? ? nil : options[:email]
+    user = User.find_by(email: user_email)
 
-    user_email = options.blank?? nil : options[:email]
-    user = user_email && User.find_by(email: user_email)
-
-    if user && ActiveSupport::SecurityUtils.secure_compare(user.authentication_token, token)
-      @current_user = user
-    else
-      return unauthenticated!
-    end
+    return unauthenticated! if user.blank? || !ActiveSupport::SecurityUtils.secure_compare(user.authentication_token, token)
+    @current_user = user
   end
 
   # private
@@ -262,6 +269,7 @@ class Api::V1::BaseController < ActionController::API
 
   def find_model path=nil
     # Find the name of the model from controller
+    path ||= params[:path]
     @singular_controller = (path.presence || controller_name).singularize.to_sym
     @model = (path.presence || controller_path).classify.constantize rescue controller_name.classify.constantize
   end

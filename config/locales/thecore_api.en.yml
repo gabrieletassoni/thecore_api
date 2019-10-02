@@ -1,0 +1,6 @@
+en:
+  api:
+    errors:
+      bad_credentials: Bad Credentials
+      unauthorized: Unauthorized Action
+      not_found: Resource not found
