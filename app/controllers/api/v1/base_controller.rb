@@ -22,7 +22,7 @@ class Api::V1::BaseController < ActionController::API
   before_action :destroy_session
 
   before_action :authenticate_user!
-  before_action :find_model, except: [ :version, :available_roles, :translations, :schema ]
+  before_action :find_model#, except: [ :version, :available_roles, :translations, :schema ]
   before_action :find_record, only: [ :show, :update, :destroy ]
 
   rescue_from ActiveRecord::StatementInvalid, with: :unauthenticated!
@@ -152,7 +152,7 @@ class Api::V1::BaseController < ActionController::API
 
   def show
     result = @record.to_json(json_attrs)
-    render json: result, status: result.blank? ? 404 : 200
+    render json: result, status: 200
   end
 
   def create
@@ -171,11 +171,9 @@ class Api::V1::BaseController < ActionController::API
   end
 
   def destroy
-    unless @record.destroy
-       return api_error(status: 500)
-    end
-
-    render json: {message: "Deleted"}, status: 200
+    return api_error(status: 500) unless @record.destroy
+    # render json: {message: "Deleted"}, status: 200
+    head :ok
   end
 
   protected
@@ -208,7 +206,7 @@ class Api::V1::BaseController < ActionController::API
 
   def api_error(status: 500, errors: [])
     # puts errors.full_messages if !Rails.env.production? && errors.respond_to?(:full_messages)
-    head status: status && return if errors.empty?
+    head status && return if errors.empty?
     
     # For retrocompatibility, I try to send back only strings, as errors
     errors_response = if errors.respond_to?(:full_messages) 
@@ -265,18 +263,17 @@ class Api::V1::BaseController < ActionController::API
   def find_record
     # find the records
     @record = @model.column_names.include?("user_id") ? @model.where(id: (@record_id.presence || params[:id]), user_id: current_user.id).first : @model.find((@record_id.presence || params[:id]))
+    return not_found! if @record.blank?
   end
 
   def find_model path=nil
     # Find the name of the model from controller
-    path ||= params[:path]
-    @singular_controller = (path.presence || controller_name).singularize.to_sym
-    @model = (path.presence || controller_path).classify.constantize rescue controller_name.classify.constantize
+    path ||= params[:path].split("/").first
+    @model = (path.presence || controller_path).classify.constantize rescue controller_name.classify.constantize rescue nil
   end
 
   def request_params
-    # controller_name.singularize.to_sym 
-    (@params.presence || params).require(@singular_controller).permit!
+    (@params.presence || params).require(params[:path].split("/").first.singularize.to_sym).permit!
   end
 
   def json_attrs
