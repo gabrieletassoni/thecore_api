@@ -268,7 +268,7 @@ class Api::V1::BaseController < ActionController::API
 
   def find_model path=nil
     # Find the name of the model from controller
-    path ||= params[:path].split("/").first
+    path ||= (params[:path].split("/").first rescue nil)
     @model = (path.presence || controller_path).classify.constantize rescue controller_name.classify.constantize rescue nil
   end
 
