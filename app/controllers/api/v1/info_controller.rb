@@ -44,9 +44,14 @@ class Api::V1::InfoController < Api::V1::BaseController
       d.columns_hash.each_pair do |key, val| 
         pivot[model][key] = val.type unless key.ends_with? "_id"
       end
+      # Only application record descendants to have a clean schema
       pivot[model][:associations] ||= {
-        has_many: d.reflect_on_all_associations(:has_many).map(&:name), 
-        belongs_to: d.reflect_on_all_associations(:belongs_to).map(&:name)
+        has_many: d.reflect_on_all_associations(:has_many).map { |a| 
+          a.name if ((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) 
+        }.compact, 
+        belongs_to: d.reflect_on_all_associations(:belongs_to).map { |a| 
+          a.name if ((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) 
+        }.compact
       }
     end
     render json: pivot.to_json, status: 200

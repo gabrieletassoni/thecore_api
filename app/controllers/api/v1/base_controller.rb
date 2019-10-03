@@ -28,9 +28,9 @@ class Api::V1::BaseController < ActionController::API
   rescue_from ActiveRecord::StatementInvalid, with: :unauthenticated!
   rescue_from ActiveRecord::RecordInvalid, with: :invalid!
   rescue_from CanCan::AccessDenied, with: :unauthorized!
-  rescue_from ActiveRecord::RecordNotFound, with: :not_found!
-  rescue_from NameError, with: :not_found!
-  rescue_from NoMethodError, with: :not_found!
+  # rescue_from ActiveRecord::RecordNotFound, with: :not_found!
+  # rescue_from NameError, with: :not_found!
+  # rescue_from NoMethodError, with: :not_found!
 
   attr_accessor :current_user
 
