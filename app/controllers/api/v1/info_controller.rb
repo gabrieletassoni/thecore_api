@@ -42,8 +42,12 @@ class Api::V1::InfoController < Api::V1::BaseController
       model = d.to_s.underscore.tableize
       pivot[model] ||= {}
       d.columns_hash.each_pair do |key, val| 
-        pivot[model][key] = val.type 
-      end 
+        pivot[model][key] = val.type unless key.ends_with? "_id"
+      end
+      pivot[model][:associations] ||= {
+        has_many: d.reflect_on_all_associations(:has_many).map(&:name), 
+        belongs_to: d.reflect_on_all_associations(:belongs_to).map(&:name)
+      }
     end
     render json: pivot.to_json, status: 200
   end
