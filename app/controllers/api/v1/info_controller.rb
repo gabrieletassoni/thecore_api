@@ -47,10 +47,10 @@ class Api::V1::InfoController < Api::V1::BaseController
       # Only application record descendants to have a clean schema
       pivot[model][:associations] ||= {
         has_many: d.reflect_on_all_associations(:has_many).map { |a| 
-          a.name if ((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) 
+          a.name if (((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) rescue false)
         }.compact, 
         belongs_to: d.reflect_on_all_associations(:belongs_to).map { |a| 
-          a.name if ((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) 
+          a.name if (((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) rescue false)
         }.compact
       }
     end
