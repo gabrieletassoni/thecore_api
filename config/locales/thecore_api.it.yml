@@ -4,3 +4,4 @@ it:
       bad_credentials: Credenziali errate
       unauthorized: Operazione non autorizzata
       not_found: Risorsa non trovata
+      fivehundred: Errore interno del server, prego contattare il fornitore del servizio.

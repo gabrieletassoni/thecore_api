@@ -4,3 +4,4 @@ en:
       bad_credentials: Bad Credentials
       unauthorized: Unauthorized Action
       not_found: Resource not found
+      fivehundred: Internal server error, please contact service provider.

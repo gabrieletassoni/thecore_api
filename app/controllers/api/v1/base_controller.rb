@@ -31,6 +31,7 @@ class Api::V1::BaseController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!
   rescue_from NameError, with: :not_found!
   rescue_from NoMethodError, with: :not_found!
+  rescue_from RubySpark::Device::ApiError, with: :fivehundred!
 
   attr_accessor :current_user
 
@@ -204,6 +205,10 @@ class Api::V1::BaseController < ActionController::API
     # puts "ISPEZIONI: #{exception.record.errors.inspect}"
     # render json: { error: exception }, status: 422
     api_error status: 422, errors: exception.record.errors
+  end
+
+  def fivehundred!
+    api_error status: 500, errors: [I18n.t("api.errors.fivehundred", default: "Internal Server Error")]
   end
 
   def api_error(status: 500, errors: [])
