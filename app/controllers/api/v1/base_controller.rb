@@ -31,7 +31,7 @@ class Api::V1::BaseController < ActionController::API
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!
   rescue_from NameError, with: :not_found!
   rescue_from NoMethodError, with: :not_found!
-  rescue_from RubySpark::Device::ApiError, with: :fivehundred!
+  # rescue_from ::RubySpark::Device::ApiError, with: :fivehundred!
 
   attr_accessor :current_user
 
@@ -131,12 +131,13 @@ class Api::V1::BaseController < ActionController::API
       current_page_number: @records.current_page
     }) if !pages_info.blank?
     
+    puts @records_all.inspect
     status = @records_all.blank? ? 404 : 200
-    # If it's asked for page number, then paginate
+    puts "If it's asked for page number, then paginate"
     return render json: MultiJson.dump(@records, json_attrs), status: status if !page.blank? # (@json_attrs || {})
-    # if you ask for count, then return a json object with just the number of objects
+    puts "if you ask for count, then return a json object with just the number of objects"
     return render json: MultiJson.dump({count: @records_all.count}) if !count.blank?
-    # Default
+    puts "Default"
     render json: MultiJson.dump(@records_all, json_attrs), status: status #(@json_attrs || {})
   end
 
