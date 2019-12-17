@@ -29,8 +29,8 @@ class Api::V1::BaseController < ActionController::API
   rescue_from ActiveRecord::RecordInvalid, with: :invalid!
   rescue_from CanCan::AccessDenied, with: :unauthorized!
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!
-  rescue_from NameError, with: :not_found!
-  rescue_from NoMethodError, with: :not_found!
+  rescue_from NameError, with: :name_error!
+  rescue_from NoMethodError, with: :no_method_error!
   # rescue_from ::RubySpark::Device::ApiError, with: :fivehundred!
 
   attr_accessor :current_user
@@ -49,6 +49,7 @@ class Api::V1::BaseController < ActionController::API
     # So, if it's not an activerecord, the find model makes no sense at all
     # Thus must return 404
     path = params[:path].split("/")
+    puts "CHECK"
     return not_found! if (!path.first.classify.constantize.new.is_a? ActiveRecord::Base rescue false)
     find_model path.first
     if request.get?
@@ -62,6 +63,7 @@ class Api::V1::BaseController < ActionController::API
       elsif path.second.to_i.zero?
         # String, so it's a custom action I must find in the @model (as a singleton method)
         # GET :controller/:custom_action
+        puts "SECOND ZERO?"
         return not_found! unless @model.respond_to?(path.second)
         return render json: MultiJson.dump(@model.send(path.second, params)), status: 200
       elsif !path.second.to_i.zero? && path.third.blank?
@@ -73,6 +75,7 @@ class Api::V1::BaseController < ActionController::API
         show
       elsif !path.second.to_i.zero? && !path.third.blank?
         # GET :controller/:id/:custom_action
+        puts "SECOND AND THIRD"
         return not_found! unless @model.respond_to?(path.third)
         return render json: MultiJson.dump(@model.send(path.third, path.second.to_i, params)), status: 200
       end
@@ -82,6 +85,7 @@ class Api::V1::BaseController < ActionController::API
         create
       elsif path.second.to_i.zero?
         # POST :controller/:custom_action
+        puts "NO SECOND"
         return not_found! unless @model.respond_to?(path.second)
         return render json: MultiJson.dump(@model.send(path.second, params)), status: 200
       end
@@ -95,6 +99,7 @@ class Api::V1::BaseController < ActionController::API
         update
       elsif !path.second.to_i.zero? && !path.third.blank?
         # PUT :controller/:id/:custom_action
+        puts "ANOTHER SECOND AND THIRD"
         return not_found! unless @model.respond_to?(path.third)
         return render json: MultiJson.dump(@model.send(path.third, path.second.to_i, params)), status: 200
       end
@@ -131,14 +136,17 @@ class Api::V1::BaseController < ActionController::API
       current_page_number: @records.current_page
     }) if !pages_info.blank?
     
-    puts @records_all.inspect
+    puts "ALL RECORDS FOUND: #{@records_all.inspect}"
     status = @records_all.blank? ? 404 : 200
     puts "If it's asked for page number, then paginate"
     return render json: MultiJson.dump(@records, json_attrs), status: status if !page.blank? # (@json_attrs || {})
     puts "if you ask for count, then return a json object with just the number of objects"
     return render json: MultiJson.dump({count: @records_all.count}) if !count.blank?
     puts "Default"
-    render json: MultiJson.dump(@records_all, json_attrs), status: status #(@json_attrs || {})
+    json_out = MultiJson.dump(@records_all, json_attrs)
+    puts "JSON ATTRS: #{json_attrs}"
+    puts "JSON OUT: #{json_out}"
+    render json: json_out, status: status #(@json_attrs || {})
   end
 
   # def count
@@ -200,6 +208,14 @@ class Api::V1::BaseController < ActionController::API
 
   def not_found!
     return api_error(status: 404, errors: [I18n.t("api.errors.not_found", default: "Not Found")])
+  end
+
+  def name_error!
+    api_error(status: 501, errors: [I18n.t("api.errors.name_error", default: "Name Error")])
+  end
+
+  def no_method_error!
+    api_error(status: 501, errors: [I18n.t("api.errors.no_method_error", default: "No Method Error")])
   end
 
   def invalid! exception

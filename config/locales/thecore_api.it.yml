@@ -5,3 +5,5 @@ it:
       unauthorized: Operazione non autorizzata
       not_found: Risorsa non trovata
       fivehundred: Errore interno del server, prego contattare il fornitore del servizio.
+      name_error: Errore di Nome, metodo non trovato
+      no_method_error: Metodo non trovato, azione non trovata
