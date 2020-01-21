@@ -53,6 +53,7 @@ class Api::V1::InfoController < Api::V1::BaseController
           a.name if (((a.options[:class_name].presence || a.name).to_s.classify.constantize.new.is_a? ApplicationRecord) rescue false)
         }.compact
       }
+      pivot[model][:methods] ||= (d.instance_methods(false).include?(:json_attrs) && !d.json_attrs.blank?) ? d.json_attrs[:methods] : nil
     end
     render json: pivot.to_json, status: 200
   end

@@ -29,8 +29,8 @@ class Api::V1::BaseController < ActionController::API
   rescue_from ActiveRecord::RecordInvalid, with: :invalid!
   rescue_from CanCan::AccessDenied, with: :unauthorized!
   rescue_from ActiveRecord::RecordNotFound, with: :not_found!
-  rescue_from NameError, with: :name_error!
-  rescue_from NoMethodError, with: :no_method_error!
+  # rescue_from NameError, with: :name_error!
+  # rescue_from NoMethodError, with: :no_method_error!
   # rescue_from ::RubySpark::Device::ApiError, with: :fivehundred!
 
   attr_accessor :current_user
