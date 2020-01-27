@@ -177,7 +177,7 @@ class Api::V1::BaseController < ActionController::API
   end
 
   def update
-    @record.update_attributes(request_params)
+    @record.update_attributes!(request_params)
 
     render json: @record.to_json(json_attrs), status: 200
   end
