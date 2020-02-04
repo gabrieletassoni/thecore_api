@@ -14,6 +14,7 @@ Rails.application.routes.draw do
         get :available_roles
         get :translations
         get :schema
+        get :dsl
       end
 
       resources :users, only: [:index, :create, :show, :update, :destroy] do

@@ -58,6 +58,19 @@ class Api::V1::InfoController < Api::V1::BaseController
     render json: pivot.to_json, status: 200
   end
 
+  # GET '/api/v1/info/dsl'
+  def dsl
+    pivot = {}
+    if Rails.env.development?
+      Rails.configuration.eager_load_namespaces.each(&:eager_load!) if Rails.version.to_i == 5 #Rails 5
+      Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
+    end
+    ApplicationRecord.subclasses.each do |d|
+      model = d.to_s.underscore.tableize
+      pivot[model] = (d.instance_methods(false).include?(:json_attrs) && !d.json_attrs.blank?) ? d.json_attrs : nil
+    end
+    render json: pivot.to_json, status: 200
+  end
   # private
 
   # Method overridden because the first time I have to ask for the token
