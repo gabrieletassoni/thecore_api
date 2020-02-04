@@ -34,10 +34,10 @@ class Api::V1::InfoController < Api::V1::BaseController
   # GET '/api/v1/info/schema'
   def schema
     pivot = {}
-    if Rails.env.development?
-      Rails.configuration.eager_load_namespaces.each(&:eager_load!) if Rails.version.to_i == 5 #Rails 5
-      Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
-    end
+    # if Rails.env.development?
+    #   Rails.configuration.eager_load_namespaces.each(&:eager_load!) if Rails.version.to_i == 5 #Rails 5
+    #   Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
+    # end
     ApplicationRecord.subclasses.each do |d|
       model = d.to_s.underscore.tableize
       pivot[model] ||= {}
@@ -61,10 +61,10 @@ class Api::V1::InfoController < Api::V1::BaseController
   # GET '/api/v1/info/dsl'
   def dsl
     pivot = {}
-    if Rails.env.development?
-      Rails.configuration.eager_load_namespaces.each(&:eager_load!) if Rails.version.to_i == 5 #Rails 5
-      Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
-    end
+    # if Rails.env.development?
+    #   Rails.configuration.eager_load_namespaces.each(&:eager_load!) if Rails.version.to_i == 5 #Rails 5
+    #   Zeitwerk::Loader.eager_load_all if Rails.version.to_i >= 6 #Rails 6
+    # end
     ApplicationRecord.subclasses.each do |d|
       model = d.to_s.underscore.tableize
       pivot[model] = (d.instance_methods(false).include?(:json_attrs) && !d.json_attrs.blank?) ? d.json_attrs : nil
